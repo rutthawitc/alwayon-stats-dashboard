@@ -17,19 +17,40 @@ import config, { getCurrentYearTarget } from "@/config/dashboard";
 import { ChartData } from "@/lib/types";
 import { formatNumber } from "@/lib/formatters";
 
-interface PerformanceChartProps {
-  data: ChartData[];
-  targetValue?: number;
-  title?: string;
-  height?: number;
-  showLegend?: boolean;
-  customColors?: {
-    barColor?: string;
-    targetLineColor?: string;
-    regionColor?: string;
-  };
-  animate?: boolean;
-}
+/**
+ * Interface สำหรับ props ของ PerformanceChart
+ * @interface PerformanceChartProps
+ * @property {ChartData[]} data - ข้อมูลสำหรับแสดงในกราฟ
+ * @property {number} [targetValue] - ค่าเป้าหมาย
+ * @property {string} [title] - หัวข้อกราฟ
+ * @property {number} [height] - ความสูงของกราฟ
+ * @property {boolean} [showLegend] - แสดง/ซ่อน legend
+ * @property {object} [customColors] - สีที่กำหนดเอง
+ * @property {boolean} [animate] - เปิด/ปิดการ animate
+ */
+
+/**
+ * @component CustomTooltip
+ * @description Component สำหรับแสดง tooltip ของกราฟ
+ * @param {TooltipProps<number, string>} props - Props ของ tooltip
+ * @returns {JSX.Element | null} Tooltip หรือ null ถ้าไม่มีข้อมูล
+ */
+
+/**
+ * @component CustomLegend
+ * @description Component สำหรับแสดง legend ของกราฟ
+ * @param {object} props - Props ของ legend
+ * @param {string} props.barColor - สีของแท่งกราฟ
+ * @param {string} props.regionColor - สีของภาพรวมเขต
+ * @param {number} props.targetValue - ค่าเป้าหมาย
+ * @returns {JSX.Element} Legend ของกราฟ
+ */
+
+/**
+ * Component แสดงกราฟประสิทธิภาพ
+ * @param {PerformanceChartProps} props - Props ของ component
+ * @returns {JSX.Element} กราฟแสดงประสิทธิภาพ
+ */
 
 const CustomTooltip = ({
   active,

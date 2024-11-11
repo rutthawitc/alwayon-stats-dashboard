@@ -1,22 +1,56 @@
-// src/components/charts/DashboardCharts.ts
+// src/components/charts/DashboardCharts.tsx
 
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import PerformanceChart from "./PerformanceChart";
+import PerformanceChart from "@/components/charts/PerformanceChart";
 import { StatisticsData, ChartData } from "@/lib/types";
-import { getThaiMonth, getThaiYear } from "@/lib/formatters";
+import { formatNumber, getThaiMonth, getThaiYear } from "@/lib/formatters";
 import {
   calculateRegionOverview,
   transformToChartData,
   calculateTrend,
+  calculateCumulativeStats,
+  calculateMonthlyGrowth,
 } from "@/lib/calculations";
 import { getAvailableMonths } from "@/lib/api";
+import { getCurrentYearTarget } from "@/config/target";
+import MonthlyStatsTable from "@/components/tables/MonthlyStatsTable";
+import GrowthTable from "../tables/GrowthTable";
 
+/**
+ * Interface defining the period range for date filtering
+ */
 interface PeriodRange {
   start: string;
   end: string;
 }
 
+/**
+ * Interface defining the structure of monthly statistics row data
+ */
+interface MonthlyStatsRow {
+  branch: string;
+  months: {
+    month: string;
+    percentage: number;
+    detail: string;
+  }[];
+}
+
+/**
+ * DashboardCharts Component
+ *
+ * A comprehensive dashboard component that displays various performance charts and statistics.
+ * Features include:
+ * - Daily performance charts
+ * - Monthly performance statistics
+ * - Cumulative performance data
+ * - Monthly comparison tables
+ * - Growth statistics
+ *
+ * @component
+ * @returns {JSX.Element} The rendered dashboard charts component
+ */
 const DashboardCharts = () => {
   const [dailyData, setDailyData] = useState<ChartData[]>([]);
   const [monthlyStats, setMonthlyStats] = useState<ChartData[]>([]);
@@ -28,63 +62,89 @@ const DashboardCharts = () => {
     end: "",
   });
 
-  const calculateCumulativeStats = (allMonthlyData: StatisticsData[][]) => {
-    // คำนวณข้อมูลสะสมรายสาขา
-    const branchMap = new Map<string, ChartData>();
+  // state for MonthlyTable
+  const [monthlyTableData, setMonthlyTableData] = useState<MonthlyStatsRow[]>(
+    []
+  );
 
-    allMonthlyData.forEach((monthData) => {
+  // state เก็บชื่อเดือน
+  const [latestMonthName, setLatestMonthName] = useState<string>("");
+  const [previousMonthName, setPreviousMonthName] = useState<string>("");
+  const [availableMonths, setAvailableMonths] = useState<string[]>([]);
+
+  const targetValue = getCurrentYearTarget();
+
+  // เพิ่ม state Monthly Growth
+  const [growthData, setGrowthData] = useState<GrowthData[]>([]);
+
+  /**
+   * Transforms monthly statistics data into a table-friendly format
+   *
+   * @param {StatisticsData[][]} allMonthlyData - Array of monthly statistics data
+   * @param {string[]} monthNames - Array of month names
+   * @returns {MonthlyStatsRow[]} Transformed data for table display
+   */
+  const transformMonthlyDataForTable = (
+    allMonthlyData: StatisticsData[][],
+    monthNames: string[]
+  ) => {
+    // สร้าง Map เก็บข้อมูลแต่ละสาขา
+    const branchMap = new Map<string, any>();
+
+    // วนลูปข้อมูลแต่ละเดือน
+    allMonthlyData.forEach((monthData, monthIndex) => {
+      const monthName = getThaiMonth(monthNames[monthIndex]);
+
       monthData.forEach((branchData) => {
-        const existing = branchMap.get(branchData.org_name);
-        if (!existing) {
+        if (!branchMap.has(branchData.org_name)) {
           branchMap.set(branchData.org_name, {
-            name: branchData.org_name,
-            value: 0,
-            total_invoices: 0,
-            other_channel: 0,
-            counter_service: 0,
+            branch: branchData.org_name,
+            months: [],
           });
         }
-        const current = branchMap.get(branchData.org_name)!;
-        current.total_invoices += branchData.cnt_inv;
-        current.other_channel += branchData.cnt_other;
-        current.counter_service += branchData.cnt_count;
-        current.value = (current.other_channel * 100) / current.total_invoices;
+
+        const percentage = (branchData.cnt_other * 100) / branchData.cnt_inv;
+        const detail = `${formatNumber(branchData.cnt_other)}/${formatNumber(
+          branchData.cnt_inv
+        )}`;
+
+        branchMap.get(branchData.org_name).months.push({
+          month: monthName,
+          percentage: percentage,
+          detail: detail,
+        });
       });
     });
 
-    // คำนวณภาพรวมเขต
-    const totals = Array.from(branchMap.values()).reduce(
-      (acc, curr) => ({
-        total_invoices: acc.total_invoices + curr.total_invoices,
-        other_channel: acc.other_channel + curr.other_channel,
-        counter_service: acc.counter_service + curr.counter_service,
-      }),
-      { total_invoices: 0, other_channel: 0, counter_service: 0 }
-    );
-
-    const regionTotal: ChartData = {
-      name: "ภาพรวมเขต",
-      value: (totals.other_channel * 100) / totals.total_invoices,
-      total_invoices: totals.total_invoices,
-      other_channel: totals.other_channel,
-      counter_service: totals.counter_service,
-    };
-
-    return [...Array.from(branchMap.values()), regionTotal];
+    return Array.from(branchMap.values());
   };
 
+  /**
+   * Fetches and processes all required data for the dashboard
+   * Includes daily stats, monthly stats, cumulative stats, and growth data
+   *
+   * @async
+   * @throws {Error} When data fetching fails
+   */
   const fetchData = async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      // 1. ดึงรายชื่อเดือนที่มีข้อมูล
       const months = await getAvailableMonths();
       if (!months.length) {
         throw new Error("ไม่พบข้อมูลรายเดือน");
       }
 
-      // 2. ดึงและแปลงข้อมูลรายวัน
+      setAvailableMonths(months);
+
+      // ประกาศตัวแปร latestMonth ครั้งเดียว
+      const latestMonth = months[months.length - 1];
+      const previousMonth = months[months.length - 2];
+
+      setLatestMonthName(getThaiMonth(latestMonth));
+      setPreviousMonthName(getThaiMonth(previousMonth));
+
       const dailyResponse = await fetch("/data/daily/DailyData.json");
       if (!dailyResponse.ok) {
         throw new Error("ไม่สามารถดึงข้อมูลรายวันได้");
@@ -93,8 +153,6 @@ const DashboardCharts = () => {
       const transformedDailyData = transformToChartData(dailyData);
       setDailyData(transformedDailyData);
 
-      // 3. ดึงและแปลงข้อมูลเดือนล่าสุด
-      const latestMonth = months[months.length - 1];
       const latestMonthResponse = await fetch(
         `/data/monthly/${latestMonth}_Data.json`
       );
@@ -106,7 +164,24 @@ const DashboardCharts = () => {
       const transformedMonthlyData = transformToChartData(latestMonthData);
       setMonthlyStats(transformedMonthlyData);
 
-      // 4. ดึงและคำนวณข้อมูลสะสม
+      // คำนวณ Growth
+      if (months.length >= 2) {
+        // ดึงข้อมูลเดือนปัจจุบันและเดือนก่อนหน้า
+        const currentMonthData = await fetch(
+          `/data/monthly/${latestMonth}_Data.json`
+        ).then((res) => res.json());
+        const previousMonthData = await fetch(
+          `/data/monthly/${previousMonth}_Data.json`
+        ).then((res) => res.json());
+
+        // คำนวณการเติบโต
+        const growthData = calculateMonthlyGrowth(
+          currentMonthData,
+          previousMonthData
+        );
+        setGrowthData(growthData);
+      }
+
       const allMonthlyDataPromises = months.map((month) =>
         fetch(`/data/monthly/${month}_Data.json`).then((res) => res.json())
       );
@@ -114,7 +189,10 @@ const DashboardCharts = () => {
       const cumulativeData = calculateCumulativeStats(allMonthlyData);
       setCumulativeStats(cumulativeData);
 
-      // 5. ตั้งค่าช่วงเวลาของข้อมูล
+      // จัดรูปแบบข้อมูลสำหรับตาราง
+      const tableData = transformMonthlyDataForTable(allMonthlyData, months);
+      setMonthlyTableData(tableData);
+
       setPeriodRange({
         start: `${getThaiMonth(months[0])} ${getThaiYear(
           allMonthlyData[0][0].data_date
@@ -157,7 +235,7 @@ const DashboardCharts = () => {
           {dailyData.length > 0 ? (
             <PerformanceChart
               data={dailyData}
-              targetValue={75}
+              targetValue={targetValue}
               title="ผลการดำเนินงานรายวัน"
               showLegend={true}
             />
@@ -170,12 +248,12 @@ const DashboardCharts = () => {
       <Card>
         <CardContent className="p-6">
           <CardHeader className="px-0 pt-0">
-            <CardTitle>สถิติรายเดือน (เดือนล่าสุด)</CardTitle>
+            <CardTitle>สถิติรายเดือน (เดือน{latestMonthName})</CardTitle>
           </CardHeader>
           {monthlyStats.length > 0 ? (
             <PerformanceChart
               data={monthlyStats}
-              targetValue={75}
+              targetValue={targetValue}
               title="ผลการดำเนินงานรายเดือน"
               showLegend={true}
             />
@@ -195,13 +273,34 @@ const DashboardCharts = () => {
           {cumulativeStats.length > 0 ? (
             <PerformanceChart
               data={cumulativeStats}
-              targetValue={75}
+              targetValue={targetValue}
               title="ผลการดำเนินงานสะสม"
               showLegend={true}
             />
           ) : (
             <div>ไม่พบข้อมูล</div>
           )}
+        </CardContent>
+      </Card>
+      {/* เพิ่มส่วนตารางข้อมูลสะสมรายเดือน */}
+      <Card>
+        <CardContent className="p-6">
+          <CardHeader className="px-0 pt-0">
+            <CardTitle>
+              ข้อมูลสะสมรายเดือน ({periodRange.start} - {periodRange.end})
+            </CardTitle>
+          </CardHeader>
+          <MonthlyStatsTable data={monthlyTableData} />
+        </CardContent>
+      </Card>
+      {/* Growth MoM */}
+      <Card>
+        <CardContent className="p-6">
+          <GrowthTable
+            data={growthData}
+            currentMonthName={latestMonthName}
+            previousMonthName={previousMonthName}
+          />
         </CardContent>
       </Card>
     </div>

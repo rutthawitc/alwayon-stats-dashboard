@@ -4,23 +4,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { formatNumber } from "@/lib/formatters";
 
-interface StatsCardProps {
-  title: string;
-  mainValue: {
-    value: number;
-    unit?: string;
-    trend?: number;
-  };
-  subtitle?: string;
-  additionalInfo?: {
-    label: string;
-    value: number | string;
-    unit?: string;
-    highlight?: boolean;
-  }[];
-  isCurrency?: boolean;
-  isPercentage?: boolean;
-}
+/**
+ * Interface สำหรับ props ของ StatsCard
+ * @interface StatsCardProps
+ * @property {string} title - หัวข้อการ์ด
+ * @property {object} mainValue - ค่าหลักที่ต้องการแสดง
+ * @property {string} [subtitle] - หัวข้อย่อย
+ * @property {Array<object>} [additionalInfo] - ข้อมูลเพิ่มเติม
+ * @property {boolean} [isCurrency] - แสดงเป็นสกุลเงิน
+ * @property {boolean} [isPercentage] - แสดงเป็นเปอร์เซ็นต์
+ */
 
 const StatsCard = ({
   title,

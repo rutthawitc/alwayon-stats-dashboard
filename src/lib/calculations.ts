@@ -1,5 +1,6 @@
 // src/lib/calculations.ts
 import { StatisticsData } from "./types";
+import { formatNumber } from "@/lib/formatters";
 
 // Base calculation functions
 export const calculations = {
@@ -78,7 +79,6 @@ export interface StatsOverview {
 export const calculateRegionOverview = (
   branches: StatisticsData[]
 ): RegionOverview => {
-  // Calculate totals
   const totals = branches.reduce<RegionTotals>(
     (acc, branch) => ({
       cnt_count: acc.cnt_count + branch.cnt_count,
@@ -98,7 +98,6 @@ export const calculateRegionOverview = (
     }
   );
 
-  // Calculate percentages
   const percentages: RegionPercentages = {
     counterPercentage: calculations.calculateCounterPercentage(
       totals.cnt_count,
@@ -133,7 +132,6 @@ export const calculateStatsOverview = (
   const dailyOverview = calculateRegionOverview(dailyData);
   const monthlyOverview = calculateRegionOverview(monthlyData);
 
-  // Calculate trend
   const trend =
     monthlyOverview.otherPercentage !== 0
       ? ((dailyOverview.otherPercentage - monthlyOverview.otherPercentage) /
@@ -141,7 +139,6 @@ export const calculateStatsOverview = (
         100
       : 0;
 
-  // Find top performing branch
   const topBranch = [...dailyData].sort((a, b) => {
     const aPercentage = calculations.calculateOtherPercentage(
       a.cnt_other,
@@ -186,7 +183,6 @@ export const calculateStatsOverview = (
   };
 };
 
-// Helper function for chart dat
 export const transformToChartData = (data: StatisticsData[]) => {
   const regionOverview = calculateRegionOverview(data);
 
@@ -199,8 +195,8 @@ export const transformToChartData = (data: StatisticsData[]) => {
     total_invoices: branch.cnt_inv,
     other_channel: branch.cnt_other,
     counter_service: branch.cnt_count,
-    total_paid: branch.cnt_paid, // เพิ่ม
-    total_debt: branch.cnt_debt, // เพิ่ม
+    total_paid: branch.cnt_paid,
+    total_debt: branch.cnt_debt,
   }));
 
   return [
@@ -211,14 +207,116 @@ export const transformToChartData = (data: StatisticsData[]) => {
       total_invoices: regionOverview.cnt_inv,
       other_channel: regionOverview.cnt_other,
       counter_service: regionOverview.cnt_count,
-      total_paid: regionOverview.cnt_paid, // เพิ่ม
-      total_debt: regionOverview.cnt_debt, // เพิ่ม
+      total_paid: regionOverview.cnt_paid,
+      total_debt: regionOverview.cnt_debt,
     },
   ];
 };
 
-// Helper function for trend calculations
+// เพิ่มฟังก์ชัน calculateCumulativeStats
+export const calculateCumulativeStats = (
+  allMonthlyData: StatisticsData[][]
+) => {
+  const branchMap = new Map<string, ChartData>();
+
+  allMonthlyData.forEach((monthData) => {
+    monthData.forEach((branchData) => {
+      const existing = branchMap.get(branchData.org_name);
+      if (!existing) {
+        branchMap.set(branchData.org_name, {
+          name: branchData.org_name,
+          value: 0,
+          total_invoices: 0,
+          other_channel: 0,
+          counter_service: 0,
+          total_paid: 0,
+          total_debt: 0,
+        });
+      }
+
+      const current = branchMap.get(branchData.org_name)!;
+      current.total_invoices += branchData.cnt_inv;
+      current.other_channel += branchData.cnt_other;
+      current.counter_service += branchData.cnt_count;
+      current.total_paid += branchData.cnt_paid;
+      current.total_debt += branchData.cnt_debt;
+      current.value = (current.other_channel * 100) / current.total_invoices;
+    });
+  });
+
+  const totals = Array.from(branchMap.values()).reduce(
+    (acc, curr) => ({
+      total_invoices: acc.total_invoices + curr.total_invoices,
+      other_channel: acc.other_channel + curr.other_channel,
+      counter_service: acc.counter_service + curr.counter_service,
+      total_paid: acc.total_paid + curr.total_paid,
+      total_debt: acc.total_debt + curr.total_debt,
+    }),
+    {
+      total_invoices: 0,
+      other_channel: 0,
+      counter_service: 0,
+      total_paid: 0,
+      total_debt: 0,
+    }
+  );
+
+  const regionTotal: ChartData = {
+    name: "ภาพรวมเขต",
+    value: (totals.other_channel * 100) / totals.total_invoices,
+    total_invoices: totals.total_invoices,
+    other_channel: totals.other_channel,
+    counter_service: totals.counter_service,
+    total_paid: totals.total_paid,
+    total_debt: totals.total_debt,
+  };
+
+  return [...Array.from(branchMap.values()), regionTotal];
+};
+
 export const calculateTrend = (current: number, previous: number): number => {
   if (previous === 0) return 0;
   return ((current - previous) / previous) * 100;
+};
+
+// Mont-byMonth Growth Calculation.
+
+export const calculateMonthlyGrowth = (
+  currentMonthData: StatisticsData[],
+  previousMonthData: StatisticsData[]
+) => {
+  return currentMonthData.map((currentBranch) => {
+    const previousBranch = previousMonthData.find(
+      (branch) => branch.ba_code === currentBranch.ba_code
+    );
+
+    const currentPercentage =
+      (currentBranch.cnt_other * 100) / currentBranch.cnt_inv;
+    const previousPercentage = previousBranch
+      ? (previousBranch.cnt_other * 100) / previousBranch.cnt_inv
+      : 0;
+
+    return {
+      branch: currentBranch.org_name,
+      currentMonth: {
+        percentage: currentPercentage,
+        detail: `${formatNumber(currentBranch.cnt_other)}/${formatNumber(
+          currentBranch.cnt_inv
+        )}`,
+      },
+      previousMonth: {
+        percentage: previousPercentage,
+        detail: previousBranch
+          ? `${formatNumber(previousBranch.cnt_other)}/${formatNumber(
+              previousBranch.cnt_inv
+            )}`
+          : "-",
+      },
+      growth:
+        previousPercentage > 0
+          ? ((currentPercentage - previousPercentage) / previousPercentage) *
+            100
+          : 0,
+    };
+  });
 };
