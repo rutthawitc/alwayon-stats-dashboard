@@ -38,7 +38,7 @@ export interface DashboardConfig {
 
 const config: DashboardConfig = {
   title: "PWA Always On Statistics Dashboard",
-  description: "แดชบอร์ดแสดงสถิติการใช้งานระบบ PWA",
+  description: "แดชบอร์ดแสดงสถิติการใช้งานระบบ PWA Always On",
   targets: [
     {
       year: 2024,
@@ -72,6 +72,8 @@ const config: DashboardConfig = {
     code: "THB",
   },
 };
+
+
 
 // Helper functions
 export const getCurrentYearTarget = (): number => {

@@ -1,6 +1,6 @@
 // src/components/charts/DashboardCharts.tsx
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PerformanceChart from "@/components/charts/PerformanceChart";
 import { StatisticsData, ChartData } from "@/lib/types";
@@ -13,7 +13,7 @@ import {
   calculateMonthlyGrowth,
 } from "@/lib/calculations";
 import { getAvailableMonths } from "@/lib/api";
-import { getCurrentYearTarget } from "@/config/target";
+import { getCurrentYearTarget } from "@/config/dashboard";
 import MonthlyStatsTable from "@/components/tables/MonthlyStatsTable";
 import GrowthTable from "../tables/GrowthTable";
 
@@ -142,7 +142,7 @@ const DashboardCharts = () => {
    * @async
    * @throws {Error} When data fetching fails
    */
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -225,17 +225,13 @@ const DashboardCharts = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    const fetchDataWrapper = async () => {
-      await fetchData();
-    };
-
-    fetchDataWrapper();
-    const interval = setInterval(fetchDataWrapper, 15 * 60 * 1000);
+    fetchData();
+    const interval = setInterval(fetchData, 15 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []); // We'll disable eslint for this specific line
+  }, [fetchData]); // เพิ่ม fetchData เป็น dependency
 
   if (error) {
     return <div className="text-red-500">{error}</div>;
