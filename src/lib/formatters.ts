@@ -1,8 +1,5 @@
 // src/lib/formatters.ts
 
-// src/lib/formatters.ts
-
-// Formatting utilities
 export const formatNumber = (
   value: number,
   type: "currency" | "percentage" | "number" = "number"

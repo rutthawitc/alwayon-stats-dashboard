@@ -1,3 +1,4 @@
+// src/components/ui/DataValidationAlert.tsx
 import React from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { validateStatisticsData, validatePercentages } from "@/lib/validation";

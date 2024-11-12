@@ -1,4 +1,3 @@
-// src/components/charts/PerformanceChart.tsx
 import React, { memo, useMemo } from "react";
 import {
   BarChart,
@@ -14,53 +13,69 @@ import {
 } from "recharts";
 import { Card } from "@/components/ui/card";
 import config, { getCurrentYearTarget } from "@/config/dashboard";
-import { ChartData } from "@/lib/types";
 import { formatNumber } from "@/lib/formatters";
 
-/**
- * Interface สำหรับ props ของ PerformanceChart
- * @interface PerformanceChartProps
- * @property {ChartData[]} data - ข้อมูลสำหรับแสดงในกราฟ
- * @property {number} [targetValue] - ค่าเป้าหมาย
- * @property {string} [title] - หัวข้อกราฟ
- * @property {number} [height] - ความสูงของกราฟ
- * @property {boolean} [showLegend] - แสดง/ซ่อน legend
- * @property {object} [customColors] - สีที่กำหนดเอง
- * @property {boolean} [animate] - เปิด/ปิดการ animate
- */
+// Types
+type AnimationTiming =
+  | "ease"
+  | "ease-in"
+  | "ease-out"
+  | "ease-in-out"
+  | "linear";
 
-/**
- * @component CustomTooltip
- * @description Component สำหรับแสดง tooltip ของกราฟ
- * @param {TooltipProps<number, string>} props - Props ของ tooltip
- * @returns {JSX.Element | null} Tooltip หรือ null ถ้าไม่มีข้อมูล
- */
+interface ChartDataPoint {
+  name: string;
+  value: number;
+  total_invoices: number;
+  other_channel: number;
+  counter_service: number;
+  total_paid: number;
+  total_debt: number;
+}
 
-/**
- * @component CustomLegend
- * @description Component สำหรับแสดง legend ของกราฟ
- * @param {object} props - Props ของ legend
- * @param {string} props.barColor - สีของแท่งกราฟ
- * @param {string} props.regionColor - สีของภาพรวมเขต
- * @param {number} props.targetValue - ค่าเป้าหมาย
- * @returns {JSX.Element} Legend ของกราฟ
- */
+interface PerformanceChartProps {
+  data: ChartDataPoint[];
+  targetValue?: number;
+  title?: string;
+  height?: number;
+  showLegend?: boolean;
+  customColors?: {
+    barColor?: string;
+    regionColor?: string;
+    targetLineColor?: string;
+  };
+  animate?: boolean;
+}
 
-/**
- * Component แสดงกราฟประสิทธิภาพ
- * @param {PerformanceChartProps} props - Props ของ component
- * @returns {JSX.Element} กราฟแสดงประสิทธิภาพ
- */
+interface ChartColors {
+  bar: string;
+  region: string;
+  targetLine: string;
+}
 
-const CustomTooltip = ({
-  active,
-  payload,
-  label,
-}: TooltipProps<number, string>) => {
+interface CustomTooltipProps extends TooltipProps<number, string> {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+}
+
+const chartConfig = {
+  animation: {
+    duration: 800,
+    easing: "ease-in-out" as AnimationTiming,
+    delay: 200,
+  },
+  colors: {
+    primary: "#3B82F6", // blue-500
+    secondary: "#F97316", // orange-500
+    danger: "#EF4444", // red-500
+  },
+};
+
+const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (!active || !payload || !payload.length) return null;
 
   const data = payload[0].payload;
-  console.log("Tooltip Data:", data); // เช็คข้อมูลที่เข้ามาใน Tooltip
   const value = payload[0].value as number;
   const isRegion = label === "ภาพรวมเขต";
 
@@ -77,7 +92,6 @@ const CustomTooltip = ({
           </p>
 
           <div className="mt-2 space-y-1 border-t pt-2 text-xs">
-            {/* ข้อมูลใบแจ้งหนี้ */}
             <p>
               รวมใบแจ้งหนี้:{" "}
               <span className="font-medium">
@@ -86,7 +100,6 @@ const CustomTooltip = ({
               ราย
             </p>
 
-            {/* ข้อมูลช่องทางชำระ */}
             <div className="pl-2 border-l-2 border-blue-200">
               <p>
                 ช่องทางอื่นๆ:{" "}
@@ -104,7 +117,6 @@ const CustomTooltip = ({
               </p>
             </div>
 
-            {/* ข้อมูลการชำระ */}
             <div className="pl-2 border-l-2 border-green-200 mt-2">
               <p>
                 รวมชำระ:{" "}
@@ -133,7 +145,6 @@ const CustomTooltip = ({
   );
 };
 
-// Custom Legend Component
 const CustomLegend = ({
   barColor,
   regionColor,
@@ -159,7 +170,7 @@ const CustomLegend = ({
   </div>
 );
 
-const PerformanceChart = memo(
+const PerformanceChart: React.FC<PerformanceChartProps> = memo(
   ({
     data,
     targetValue = getCurrentYearTarget(),
@@ -168,27 +179,20 @@ const PerformanceChart = memo(
     showLegend = true,
     customColors,
     animate = true,
-  }: PerformanceChartProps) => {
-    const {
-      colors: defaultColors,
-      animation: { duration, easing },
-    } = config.chart;
-
-    const chartColors = useMemo(
+  }) => {
+    const chartColors = useMemo<ChartColors>(
       () => ({
-        bar: customColors?.barColor ?? defaultColors.primary,
-        region: customColors?.regionColor ?? defaultColors.secondary,
-        targetLine: customColors?.targetLineColor ?? defaultColors.danger,
+        bar: customColors?.barColor ?? chartConfig.colors.primary,
+        region: customColors?.regionColor ?? chartConfig.colors.secondary,
+        targetLine: customColors?.targetLineColor ?? chartConfig.colors.danger,
       }),
-      [customColors, defaultColors]
+      [customColors]
     );
 
     // Format axis ticks
     const formatYAxis = (value: number) => `${value}%`;
-    const formatXAxis = (value: string) => {
-      // ถ้าชื่อยาวเกินไป ให้ตัดและใส่ ...
-      return value.length > 20 ? `${value.substring(0, 20)}...` : value;
-    };
+    const formatXAxis = (value: string) =>
+      value.length > 20 ? `${value.substring(0, 20)}...` : value;
 
     return (
       <div className="w-full">
@@ -246,8 +250,7 @@ const PerformanceChart = memo(
               strokeWidth={2}
               strokeDasharray="3 3"
               label={{
-                //value: `เป้าหมาย ${targetValue}%`,
-                position: "top",
+                position: "right",
                 fill: chartColors.targetLine,
                 fontSize: 12,
               }}
@@ -255,10 +258,11 @@ const PerformanceChart = memo(
             <Bar
               dataKey="value"
               radius={[4, 4, 0, 0]}
-              animationDuration={animate ? duration : 0}
-              animationEasing={easing}
+              animationBegin={chartConfig.animation.delay}
+              animationDuration={animate ? chartConfig.animation.duration : 0}
+              animationEasing={chartConfig.animation.easing}
             >
-              {data.map((entry, index) => (
+              {data.map((entry: ChartDataPoint, index: number) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={

@@ -1,4 +1,5 @@
 // src/components/tables/GrowthTable.tsx
+
 import React from "react";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import {
@@ -35,6 +36,25 @@ import { formatNumber } from "@/lib/formatters";
  * @param {number} props.value - ค่าการเติบโต
  * @returns {JSX.Element} ไอคอนและค่าการเติบโต
  */
+
+interface GrowthData {
+  branch: string;
+  currentMonth: {
+    percentage: number;
+    detail: string;
+  };
+  previousMonth: {
+    percentage: number;
+    detail: string;
+  };
+  growth: number;
+}
+
+interface GrowthTableProps {
+  data: GrowthData[];
+  currentMonthName: string;
+  previousMonthName: string;
+}
 
 const GrowthIndicator = ({ value }: { value: number }) => {
   return (
@@ -80,7 +100,7 @@ const GrowthTable = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((row, index) => (
+            {data.map((row: GrowthData, index: number) => (
               <TableRow key={index}>
                 <TableCell>{row.branch}</TableCell>
                 <TableCell className="text-right">

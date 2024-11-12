@@ -38,6 +38,22 @@ interface MonthlyStatsRow {
 }
 
 /**
+ * Interface defining the structure of growth data
+ */
+interface GrowthData {
+  branch: string;
+  currentMonth: {
+    percentage: number;
+    detail: string;
+  };
+  previousMonth: {
+    percentage: number;
+    detail: string;
+  };
+  growth: number;
+}
+
+/**
  * DashboardCharts Component
  *
  * A comprehensive dashboard component that displays various performance charts and statistics.
@@ -212,10 +228,14 @@ const DashboardCharts = () => {
   };
 
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 15 * 60 * 1000);
+    const fetchDataWrapper = async () => {
+      await fetchData();
+    };
+
+    fetchDataWrapper();
+    const interval = setInterval(fetchDataWrapper, 15 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, []); // We'll disable eslint for this specific line
 
   if (error) {
     return <div className="text-red-500">{error}</div>;
@@ -258,7 +278,7 @@ const DashboardCharts = () => {
               showLegend={true}
             />
           ) : (
-            <div>ไม่พบข้อมูล</div>
+            <div>ไม่พบข���อมูล</div>
           )}
         </CardContent>
       </Card>
@@ -296,11 +316,21 @@ const DashboardCharts = () => {
       {/* Growth MoM */}
       <Card>
         <CardContent className="p-6">
-          <GrowthTable
-            data={growthData}
-            currentMonthName={latestMonthName}
-            previousMonthName={previousMonthName}
-          />
+          {availableMonths.length >= 2 ? (
+            <GrowthTable
+              data={growthData}
+              currentMonthName={latestMonthName}
+              previousMonthName={previousMonthName}
+            />
+          ) : (
+            <div className="text-center p-4">
+              <CardTitle className="mb-2">อัตราการเติบโตรายเดือน</CardTitle>
+              <p className="text-gray-500">
+                ยังไม่มีข้อมูลเพียงพอสำหรับการเปรียบเทียบ (ต้องมีข้อมูลอย่างน้อย
+                2 เดือน)
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

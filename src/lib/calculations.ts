@@ -1,6 +1,10 @@
 // src/lib/calculations.ts
+
 import { StatisticsData } from "./types";
 import { formatNumber } from "@/lib/formatters";
+import { ChartData } from '@/lib/types';
+
+const branchMap = new Map<string, ChartData>();
 
 // Base calculation functions
 export const calculations = {
@@ -261,6 +265,7 @@ export const calculateCumulativeStats = (
     }
   );
 
+  
   const regionTotal: ChartData = {
     name: "ภาพรวมเขต",
     value: (totals.other_channel * 100) / totals.total_invoices,

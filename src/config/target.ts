@@ -1,3 +1,4 @@
+// src/config/target.ts
 interface YearlyTarget {
   year: number;
   value: number;

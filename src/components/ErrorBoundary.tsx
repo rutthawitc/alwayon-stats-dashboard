@@ -1,3 +1,4 @@
+// src/components/ErrorBoundary.tsx
 import React from "react";
 import { ErrorAlert } from "./ui/ErrorAlert";
 

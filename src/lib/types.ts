@@ -1,4 +1,3 @@
-// src/lib/types.ts
 export interface StatisticsData {
   ba_code: number;
   org_name: string;
@@ -15,28 +14,18 @@ export interface StatisticsData {
 export interface ChartData {
   name: string;
   value: number;
-  total_invoices: number; // รวมใบแจ้งหนี้
-  other_channel: number; // ช่องทางอื่นๆ
-  counter_service: number; // เคาท์เตอร์ประปา
-  total_paid: number; // รวมชำระ
-  total_debt: number; // ค้างชำระ
-}
-
-// สำหรับ StatsCard
-export interface StatsCardProps {
-  title: string;
-  value: number;
-  trend?: number;
-  subtitle?: string;
-  isCurrency?: boolean;
-  isPercentage?: boolean;
+  total_invoices: number;
+  other_channel: number;
+  counter_service: number;
+  total_paid: number;
+  total_debt: number;
 }
 
 export interface CumulativeData {
   name: string;
   cumulativeValue: number;
   monthly: {
-    [key: string]: number; // เช่น { "October": 1000, "November": 2000 }
+    [key: string]: number;
   };
 }
 
@@ -61,4 +50,22 @@ export interface StatsOverview {
     percentage: number;
     total_invoices: number;
   };
+}
+
+export interface StatsCardProps {
+  title: string;
+  mainValue: {
+    value: number;
+    unit?: string;
+    trend?: number;
+  };
+  subtitle?: string;
+  additionalInfo?: Array<{
+    label: string;
+    value: number | string;
+    unit?: string;
+    highlight?: boolean;
+  }>;
+  isCurrency?: boolean;
+  isPercentage?: boolean;
 }

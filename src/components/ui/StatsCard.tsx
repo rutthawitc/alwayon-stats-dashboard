@@ -1,4 +1,5 @@
 // src/components/ui/StatsCard.tsx
+
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, TrendingDown } from "lucide-react";
@@ -14,6 +15,24 @@ import { formatNumber } from "@/lib/formatters";
  * @property {boolean} [isCurrency] - แสดงเป็นสกุลเงิน
  * @property {boolean} [isPercentage] - แสดงเป็นเปอร์เซ็นต์
  */
+
+interface StatsCardProps {
+  title: string;
+  mainValue: {
+    value: number;
+    unit?: string;
+    trend?: number;
+  };
+  subtitle?: string;
+  additionalInfo?: Array<{
+    label: string;
+    value: number | string;
+    unit?: string;
+    highlight?: boolean;
+  }>;
+  isCurrency?: boolean;
+  isPercentage?: boolean;
+}
 
 const StatsCard = ({
   title,
@@ -81,29 +100,39 @@ const StatsCard = ({
           {/* Additional Information */}
           {additionalInfo && (
             <div className="space-y-2 border-t pt-2 mt-2">
-              {additionalInfo.map((info, index) => (
-                <div
-                  key={index}
-                  className="flex items-baseline justify-between text-sm"
-                >
-                  <span className="text-gray-500">{info.label}</span>
-                  <span
-                    className={`${
-                      info.highlight
-                        ? "font-semibold text-gray-900"
-                        : "text-gray-600"
-                    }`}
+              {additionalInfo.map(
+                (
+                  info: {
+                    label: string;
+                    value: number | string;
+                    unit?: string;
+                    highlight?: boolean;
+                  },
+                  index: number
+                ) => (
+                  <div
+                    key={index}
+                    className="flex items-baseline justify-between text-sm"
                   >
-                    {typeof info.value === "number"
-                      ? formatValue(
-                          info.value,
-                          isCurrency ? "currency" : undefined
-                        )
-                      : info.value}
-                    {info.unit && ` ${info.unit}`}
-                  </span>
-                </div>
-              ))}
+                    <span className="text-gray-500">{info.label}</span>
+                    <span
+                      className={`${
+                        info.highlight
+                          ? "font-semibold text-gray-900"
+                          : "text-gray-600"
+                      }`}
+                    >
+                      {typeof info.value === "number"
+                        ? formatValue(
+                            info.value,
+                            isCurrency ? "currency" : undefined
+                          )
+                        : info.value}
+                      {info.unit && ` ${info.unit}`}
+                    </span>
+                  </div>
+                )
+              )}
             </div>
           )}
         </div>

@@ -1,5 +1,12 @@
 // src/lib/validation.ts
 
+import { StatisticsData } from '@/lib/types';
+
+/**
+ * ตรวจสอบความถูกต้องของข้อมูลสถิติ
+ * @param data ข้อมูลสถิติที่ต้องการตรวจสอบ
+ * @returns boolean ผลการตรวจสอบ
+ */
 export const validateStatisticsData = (data: StatisticsData): boolean => {
   // ตรวจสอบว่าข้อมูลครบถ้วน
   const requiredFields = [
@@ -34,7 +41,11 @@ export const validateStatisticsData = (data: StatisticsData): boolean => {
   return validations.every(Boolean);
 };
 
-// ฟังก์ชั่นสำหรับตรวจสอบความถูกต้องของเปอร์เซ็นต์
+/**
+ * ตรวจสอบความถูกต้องของเปอร์เซ็นต์
+ * @param data ข้อมูลสถิติที่ต้องการตรวจสอบ
+ * @returns boolean ผลการตรวจสอบ
+ */
 export const validatePercentages = (data: StatisticsData): boolean => {
   const { cnt_count, cnt_other, cnt_paid, cnt_inv, cnt_debt } = data;
 
@@ -45,10 +56,8 @@ export const validatePercentages = (data: StatisticsData): boolean => {
   const debtPercentage = (cnt_debt * 100) / cnt_inv;
 
   // ตรวจสอบว่าผลรวมเปอร์เซ็นต์ถูกต้อง
-  const isCounterAndOtherValid =
-    Math.abs(counterPercentage + otherPercentage - paidPercentage) < 0.01;
-  const isPaidAndDebtValid =
-    Math.abs(paidPercentage + debtPercentage - 100) < 0.01;
+  const isCounterAndOtherValid = Math.abs(counterPercentage + otherPercentage - paidPercentage) < 0.01;
+  const isPaidAndDebtValid = Math.abs(paidPercentage + debtPercentage - 100) < 0.01;
 
   return isCounterAndOtherValid && isPaidAndDebtValid;
 };
