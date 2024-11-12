@@ -42,7 +42,7 @@ const config: DashboardConfig = {
   targets: [
     {
       year: 2024,
-      value: 75.0,
+      value: 72.50,
       description: "เป้าหมายปี 2567",
     },
     {
