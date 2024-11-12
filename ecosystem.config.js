@@ -3,7 +3,7 @@ module.exports = {
     {
       name: "alwayon-dashboard",
       script: "node_modules/next/dist/bin/next",
-      args: "start --port 3005",
+      args: "start --port 3009",
       instances: 1,
       exec_mode: "cluster",
       watch: false,
