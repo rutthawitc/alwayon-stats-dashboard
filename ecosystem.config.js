@@ -7,6 +7,7 @@ module.exports = {
       instances: 1,
       exec_mode: "cluster",
       watch: false,
+      interpreter: process.argv[0], // ใช้ Node.js version ปัจจุบัน
       max_memory_restart: "1G",
       env: {
         NODE_ENV: "production",
