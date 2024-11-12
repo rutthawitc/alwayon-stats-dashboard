@@ -1,6 +1,7 @@
 {
   "name": "alwayon-stats-dashboard",
   "version": "0.1.0",
+  "packageManager": "yarn@4.5.1",
   "private": true,
   "scripts": {
     "dev": "next dev -p 4000",
