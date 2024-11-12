@@ -5,7 +5,7 @@ interface YearlyTarget {
 }
 
 export const PERFORMANCE_TARGETS: YearlyTarget[] = [
-  { year: 2024, value: 75.25 }, // ค่าเป้าหมายปี 2024
+  { year: 2024, value: 72.50 }, // ค่าเป้าหมายปี 2024
   { year: 2023, value: 72.0 }, // ค่าเป้าหมายปี 2023
 ];
 
