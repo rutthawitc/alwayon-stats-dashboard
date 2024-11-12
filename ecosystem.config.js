@@ -1,22 +1,19 @@
-module.exports = {
-  apps: [
-    {
-      name: "alwayon-dashboard",
-      script: "node_modules/next/dist/bin/next",
-      args: "start --port 3005",
-      instances: 1,
-      exec_mode: "cluster",
-      watch: false,
-      interpreter: process.argv[0], // ใช้ Node.js version ปัจจุบัน
-      max_memory_restart: "1G",
-      env: {
-        NODE_ENV: "production",
-        PORT: 3005,
-      },
-      log_date_format: "YYYY-MM-DD HH:mm:ss",
-      error_file: "logs/error.log",
-      out_file: "logs/output.log",
-      time: true,
+import { join } from "path";
+
+export const apps = [
+  {
+    name: "alwayon-dashboard",
+    script: join(__dirname, "node_modules/next/dist/bin/next"),
+    args: "start --port 3005",
+    instances: 1,
+    exec_mode: "cluster",
+    watch: false,
+    interpreter: "/home/rutthawitc/.nvm/versions/node/v20.18.0/bin/node",
+    max_memory_restart: "1G",
+    env: {
+      NODE_ENV: "production",
+      PORT: 3005,
+      NODE_VERSION: process.version, // เพิ่ม Node version เข้าไปใน env
     },
-  ],
-};
+  },
+];
