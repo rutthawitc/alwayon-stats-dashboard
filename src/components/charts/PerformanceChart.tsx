@@ -154,18 +154,20 @@ const CustomLegend = ({
   regionColor: string;
   targetValue: number;
 }) => (
-  <div className="flex items-center justify-center gap-6 text-sm mb-4">
+  <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm mb-4">
     <div className="flex items-center gap-2">
       <div className="w-3 h-3" style={{ backgroundColor: barColor }}></div>
-      <span>ข้อมูลรายสาขา</span>
+      <span className="hidden sm:inline">ข้อมูลรายสาขา</span>
+      <span className="sm:hidden">สาขา</span>
     </div>
     <div className="flex items-center gap-2">
       <div className="w-3 h-3" style={{ backgroundColor: regionColor }}></div>
-      <span>ภาพรวมเขต</span>
+      <span className="hidden sm:inline">ภาพรวมเขต</span>
+      <span className="sm:hidden">เขต</span>
     </div>
     <div className="flex items-center gap-2">
-      <div className="w-6 h-0 border border-dashed border-red-500"></div>
-      <span>เป้าหมาย ({targetValue}%)</span>
+      <div className="w-4 sm:w-6 h-0 border border-dashed border-red-500"></div>
+      <span>เป้า ({targetValue}%)</span>
     </div>
   </div>
 );
@@ -189,19 +191,32 @@ const PerformanceChart: React.FC<PerformanceChartProps> = memo(
       [customColors]
     );
 
+    const formatXAxis = (value: string) => {
+      if (typeof window !== 'undefined' && window.innerWidth <= 640) {
+        // For mobile screens (sm breakpoint)
+        return value.length > 10 ? `${value.substring(0, 10)}...` : value;
+      }
+      return value.length > 20 ? `${value.substring(0, 20)}...` : value;
+    };
+
+    // Calculate dynamic height based on screen size
+    const chartHeight = useMemo(() => {
+      if (typeof window !== 'undefined') {
+        return window.innerWidth <= 640 ? 300 : height;
+      }
+      return height;
+    }, [height]);
+
     // Format axis ticks
     const formatYAxis = (value: number) => `${value}%`;
-    const formatXAxis = (value: string) =>
-      value.length > 20 ? `${value.substring(0, 20)}...` : value;
 
     return (
       <div className="w-full">
         {title && (
-          <h3 className="text-lg font-medium mb-4 px-4 text-gray-800">
+          <h3 className="text-base sm:text-lg font-medium mb-4 px-2 sm:px-4 text-gray-800">
             {title}
           </h3>
         )}
-
         {showLegend && (
           <CustomLegend
             barColor={chartColors.bar}
@@ -209,72 +224,57 @@ const PerformanceChart: React.FC<PerformanceChartProps> = memo(
             targetValue={targetValue}
           />
         )}
-
-        <ResponsiveContainer width="100%" height={height}>
-          <BarChart
-            data={data}
-            margin={{
-              top: 10,
-              right: 30,
-              left: 20,
-              bottom: 70,
-            }}
-          >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              vertical={false}
-              stroke="#E5E7EB"
-            />
-            <XAxis
-              dataKey="name"
-              angle={-45}
-              textAnchor="end"
-              height={70}
-              tick={{ fontSize: 12, fill: "#6B7280" }}
-              tickFormatter={formatXAxis}
-              interval={0}
-            />
-            <YAxis
-              domain={[0, 100]}
-              ticks={[0, 20, 40, 60, 80, 100]}
-              tickFormatter={formatYAxis}
-              tick={{ fontSize: 12, fill: "#6B7280" }}
-            />
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={{ fill: "rgba(236, 236, 236, 0.4)" }}
-            />
-            <ReferenceLine
-              y={targetValue}
-              stroke={chartColors.targetLine}
-              strokeWidth={2}
-              strokeDasharray="3 3"
-              label={{
-                position: "right",
-                fill: chartColors.targetLine,
-                fontSize: 12,
+        <div className="w-full" style={{ height: chartHeight }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={data}
+              margin={{
+                top: 5,
+                right: 5,
+                left: 5,
+                bottom: 5,
               }}
-            />
-            <Bar
-              dataKey="value"
-              radius={[4, 4, 0, 0]}
-              animationBegin={chartConfig.animation.delay}
-              animationDuration={animate ? chartConfig.animation.duration : 0}
-              animationEasing={chartConfig.animation.easing}
             >
-              {data.map((entry: ChartDataPoint, index: number) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={
-                    entry.name === "ภาพรวมเขต"
-                      ? chartColors.region
-                      : chartColors.bar
-                  }
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="name"
+                tickFormatter={formatXAxis}
+                interval={0}
+                tick={{ fontSize: window?.innerWidth <= 640 ? 10 : 12 }}
+                angle={-45}
+                textAnchor="end"
+                height={60}
+              />
+              <YAxis
+                tickFormatter={formatYAxis}
+                domain={[0, 100]}
+                tick={{ fontSize: window?.innerWidth <= 640 ? 10 : 12 }}
+                width={35}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <ReferenceLine
+                y={targetValue}
+                stroke={chartColors.targetLine}
+                strokeDasharray="3 3"
+              />
+              <Bar
+                dataKey="value"
+                {...(animate && chartConfig.animation)}
+              >
+                {data.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={
+                      entry.name === "ภาพรวมเขต"
+                        ? chartColors.region
+                        : chartColors.bar
+                    }
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     );
   }
