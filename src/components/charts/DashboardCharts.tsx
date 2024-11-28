@@ -274,13 +274,13 @@ const DashboardCharts = () => {
               showLegend={true}
             />
           ) : (
-            <div>ไม่พบข���อมูล</div>
+            <div>ไม่พบข้อมูล</div>
           )}
         </CardContent>
       </Card>
 
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-1">
           <CardHeader className="px-0 pt-0">
             <CardTitle>
               ผลการดำเนินงานสะสม ({periodRange.start} - {periodRange.end})
@@ -300,7 +300,7 @@ const DashboardCharts = () => {
       </Card>
       {/* เพิ่มส่วนตารางข้อมูลสะสมรายเดือน */}
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-1">
           <CardHeader className="px-0 pt-0">
             <CardTitle>
               ข้อมูลสะสมรายเดือน ({periodRange.start} - {periodRange.end})
@@ -311,7 +311,7 @@ const DashboardCharts = () => {
       </Card>
       {/* Growth MoM */}
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-1">
           {availableMonths.length >= 2 ? (
             <GrowthTable
               data={growthData}
